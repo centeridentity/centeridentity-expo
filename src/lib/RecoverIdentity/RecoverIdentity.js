@@ -14,9 +14,9 @@ export default class RecoverIdentity extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      ci: props.ci || new CenterIdentity(),
-      publicUsername: '',
-      privateUsername: props.publicUsername || '',
+      ci: props.ci || new CenterIdentity(props.apiKey),
+      publicUsername: props.publicUsername || '',
+      privateUsername: '',
       lat: '',
       long: '',
       busy: false
@@ -63,6 +63,7 @@ export default class RecoverIdentity extends React.Component {
             return;
           }
           if (result.status === true) {
+            this.props.onIdentity(result.user);
             this.props.onSuccessfulSignIn(result);
           } else {
             this.props.onFailedSignIn(result);
@@ -94,62 +95,66 @@ export default class RecoverIdentity extends React.Component {
   }
 
   render() {
-    return <View style={{width: this.props.width, ...styles.container}}>
-      <ActivityIndicator animating={this.state.busy} color={Colors.red800} />
-      {!this.props.publicUsername && <TextInput label={this.props.publicUsernameLabel}
-        onChange={(e) => {this.publicUsernameChange(e.currentTarget.value)}}
-        value={this.state.publicUsername}
-      />}
-      <TextInput label={this.props.privateUsernameLabel}
-        onChange={(e) => {this.privateUsernameChange(e.currentTarget.value)}}
-        value={this.state.privateUsername}
-      />
-      <Map
-        mapPress={this.mapPress}
-        width={this.props.width} height={this.props.height}
-      />
-      <Portal>
-        <Modal 
-          visible={this.state.modalVisible}
-          onDismiss={() => {this.setModalVisible(!this.state.modalVisible)}}
-          contentContainerStyle={containerStyle}
-        >
-          <Text>{this.props.userNotFoundMessage}</Text>
-          <Button style={{marginTop: 30}} onPress={async () => {
-            this.setState({
-              busy: true
-            })
-            setTimeout(async () => {
-              this.setModalVisible(!this.state.modalVisible);
-
-              var result = await this.props.ci.registerWithLocation(
-                this.state.privateUsername,
-                this.props.publicUsername,
-                this.state.lat,
-                this.state.long,
-                this.props.extraData,
-                this.props.registerUrl
-              );
+    return <PaperProvider>
+      <View style={{width: this.props.width || '100%', ...styles.container}}>
+        <ActivityIndicator animating={this.state.busy} color={Colors.red800} />
+        {!this.props.publicUsername && <TextInput label={this.props.publicUsernameLabel || 'Public username'}
+          onChange={(e) => {this.publicUsernameChange(e.currentTarget.value)}}
+          value={this.state.publicUsername}
+        />}
+        <TextInput label={this.props.privateUsernameLabel || 'Private username (do not share)'}
+          onChange={(e) => {this.privateUsernameChange(e.currentTarget.value)}}
+          value={this.state.privateUsername}
+        />
+        <Map
+          mapPress={this.mapPress}
+          width={this.props.width || '100%'} height={this.props.height || 600}
+        />
+        <Portal>
+          <Modal 
+            visible={this.state.modalVisible}
+            onDismiss={() => {this.setModalVisible(!this.state.modalVisible)}}
+            contentContainerStyle={containerStyle}
+          >
+            <Text>{this.props.userNotFoundMessage || 'Identity not found for provided username and coordinates. Create a new identity?'}</Text>
+            <Button style={{marginTop: 30}} onPress={async () => {
               this.setState({
-                busy: false
+                busy: true
               })
-              if (result.status === true) {
-                this.props.onSuccessfulRegister(result);
-              } else {
-                this.props.onFailedRegister(result);
-              }
-            }, 1000);
-          }}>
-            {this.props.createText}
-          </Button>
-          <Button style={{marginTop: 30}} onPress={() => {
-            this.setModalVisible(!this.state.modalVisible);
-          }}>
-            {this.props.tryAgainText}
-          </Button>
-        </Modal>
-      </Portal>
-    </View>
+              setTimeout(async () => {
+                this.setModalVisible(!this.state.modalVisible);
+
+                var result = await this.state.ci.registerWithLocation(
+                  this.props.sessionIdUrl,
+                  this.state.privateUsername,
+                  this.state.publicUsername,
+                  this.state.lat,
+                  this.state.long,
+                  this.props.extraData,
+                  this.props.registerUrl
+                );
+                this.setState({
+                  busy: false
+                })
+                if (result.status === true) {
+                  this.props.onIdentity(result.user);
+                  this.props.onSuccessfulRegister(result);
+                } else {
+                  this.props.onFailedRegister(result);
+                }
+              }, 1000);
+            }}>
+              {this.props.createText || 'Create'}
+            </Button>
+            <Button style={{marginTop: 30}} onPress={() => {
+              this.setModalVisible(!this.state.modalVisible);
+            }}>
+              {this.props.tryAgainText || 'Try again'}
+            </Button>
+          </Modal>
+        </Portal>
+      </View>
+    </PaperProvider>
   }
 }
 
@@ -163,7 +168,6 @@ RecoverIdentity.propTypes = {
   sessionIdUrl: PropTypes.string,
   registerUrl: PropTypes.string,
   signinUrl: PropTypes.string,
-  successfulSignInUrl: PropTypes.string,
   userNotFoundMessage: PropTypes.string,
   publicUsername: PropTypes.string,
   publicUsernameLabel: PropTypes.string,
