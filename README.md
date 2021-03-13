@@ -1,4 +1,5 @@
-# expo centeridentity-expo module
+# CenterIdentity.com expo SDK!
+## Make a blockchain social network using expo in literally minutes!
 
 ```bash
 npm install centeridentity-expo
