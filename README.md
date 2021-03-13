@@ -6,7 +6,7 @@ npm install centeridentity-expo
 yarn add centeridentity-expo
 ```
 
-## Usage
+## Getting started
 `nvm install 15`
 
 `expo init` (follow prompts)
@@ -59,6 +59,8 @@ in the return from your render method or function, paste:
 copy `src/web/index.html` from this repository into the root directory at `web/index.html`
 
 in `web/index.html`, replace `YOUR_GOOGLE_MAPS_API_KEY` with your own google maps api key
+
+goto https://centeridentity.com/ and get your API key. Place `YOUR_API_KEY_FROM_DASHBOARD` in the component above with your api key.
 
 `expo start:web`
 
