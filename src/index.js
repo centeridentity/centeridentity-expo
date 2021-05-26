@@ -1,4 +1,5 @@
-import CreateCredential from './lib/CreateCredential/CreateCredential';
+import CredentialCreateForm from './lib/CredentialCreateForm/CredentialCreateForm';
+import CredentialLabel from './lib/CredentialLabel/CredentialLabel';
 import CredentialMenu from './lib/CredentialMenu/CredentialMenu';
 import CredentialQrCode from './lib/CredentialQrCode/CredentialQrCode';
 import CredentialScanner from './lib/CredentialScanner/CredentialScanner';
@@ -14,7 +15,8 @@ import MyIdentityInput from './lib/MyIdentityInput/MyIdentityInput';
 import RecoverIdentity from './lib/RecoverIdentity/RecoverIdentity';
 
 export {
-  CreateCredential,
+  CredentialCreateForm,
+  CredentialLabel,
   CredentialMenu,
   CredentialQrCode,
   CredentialScanner,

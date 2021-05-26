@@ -8,9 +8,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "centeridentity": "^1.0.110",
-    "expo-barcode-scanner": "~9.1.0",
-    "expo-camera": "~9.1.0",
+    "centeridentity": "^1.0.116",
+    "expo-barcode-scanner": "^9.1.0",
+    "expo-camera": "^9.1.1",
     "expo-image-picker": "^10.0.0",
     "expo-permissions": "~10.0.0",
     "react-datepicker": "^3.6.0",
@@ -18,6 +18,7 @@
     "react-native-open-maps": "^0.3.5",
     "react-native-paper": "^4.7.2",
     "react-native-qrcode-svg": "^6.1.1",
+    "react-native-svg": "^12.1.0",
     "react-native-web-maps": "^0.3.0"
   },
   "types": "src/index.d.ts",

@@ -1,16 +1,20 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Button } from 'react-native-paper';
+import PropTypes from 'prop-types';
 import * as ExpoImagePicker from 'expo-image-picker';
 
 export default class ImagePicker extends React.Component {
+  static label = 'Upload media'
+  static icon = 'upload'
   constructor(props) {
     super(props);
     this.state = {
       image: '',
       video: ''
     }
-    this.props.setImageUploading(false);
+    const { setImageUploading = () => {} } = props;
+    setImageUploading(false);
   }
 
   createAvatar = () => {
@@ -113,4 +117,9 @@ export default class ImagePicker extends React.Component {
       </Button>
     </View>
   }
+}
+
+ImagePicker.propTypes = {
+  setImageUploading: PropTypes.func,
+  setImageLink: PropTypes.func
 }

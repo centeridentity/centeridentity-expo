@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import PropTypes from 'prop-types';
 
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import { Camera } from 'expo-camera';
@@ -8,6 +9,8 @@ import * as Permissions from "expo-permissions";
 import CenterIdentity from 'centeridentity';
 
 export default class IdentityScanner extends React.Component {
+  static label = 'Identity scanner'
+  static icon = 'camera'
   constructor(props) {
     super(props);
     this.state = {
@@ -80,3 +83,10 @@ var styles = StyleSheet.create({
 
   }
 })
+
+IdentityScanner.propTypes = {
+  me: PropTypes.object,
+  ci: PropTypes.object,
+  collection: PropTypes.string,
+  setIdentity: PropTypes.func
+}

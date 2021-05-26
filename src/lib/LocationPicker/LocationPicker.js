@@ -1,9 +1,12 @@
 import React from 'react';
 import { View } from 'react-native';
+import PropTypes from 'prop-types';
 import Map from '../Map/Map';
 
 
 export default class LocationPicker extends React.Component {
+  static label = 'Location picker'
+  static icon = 'pin'
   constructor(props) {
     super(props);
   }
@@ -23,4 +26,13 @@ export default class LocationPicker extends React.Component {
       circles={circles}
     />
   }
+}
+
+LocationPicker.propTypes = {
+  style: PropTypes.object,
+  mapPress: PropTypes.func,
+  width: PropTypes.string,
+  height: PropTypes.number,
+  markers: PropTypes.array,
+  circles: PropTypes.array
 }

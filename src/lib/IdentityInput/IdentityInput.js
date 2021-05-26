@@ -1,9 +1,12 @@
 import React from 'react';
 import { TextInput } from 'react-native-paper';
+import PropTypes from 'prop-types';
 
 import CenterIdentity from 'centeridentity';
 
 export default class IdentityInput extends React.Component {
+  static label = 'Identity input'
+  static icon = 'text'
   constructor(props) {
     super(props)
     this.state = {
@@ -29,4 +32,10 @@ export default class IdentityInput extends React.Component {
       placeholder={this.props.placeholder}
     />
   }
+}
+
+IdentityInput.propTypes = {
+  label: PropTypes.string,
+  link: PropTypes.string,
+  placeholder: PropTypes.string,
 }

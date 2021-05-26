@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import { Menu, Button, List } from 'react-native-paper';
 
@@ -6,6 +7,8 @@ import CenterIdentity from 'centeridentity';
 
 
 export default class IdentityMenu extends React.Component {
+  static label = 'Identity menu'
+  static icon = 'menu'
   constructor(props) {
     super(props);
     this.state = {
@@ -28,7 +31,9 @@ export default class IdentityMenu extends React.Component {
   }
 
   render() {
-    var identityElements = this.props.identities.map((identity) => {
+    const { identities } = this.props;
+    const idents = identities || [];
+    var identityElements = idents.map((identity) => {
       return <List.Item
         key={identity.username_signature}
         title={identity.username} 
@@ -41,4 +46,11 @@ export default class IdentityMenu extends React.Component {
       {identityElements}
     </List.Section>
   }
+}
+
+IdentityMenu.propTypes = {
+  ci: PropTypes.object,
+  setLink: PropTypes.func,
+  subheader: PropTypes.string,
+  identities: PropTypes.array
 }

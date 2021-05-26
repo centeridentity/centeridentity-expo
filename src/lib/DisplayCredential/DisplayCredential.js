@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import { Text, TextInput, Subheading } from 'react-native-paper';
+import PropTypes from 'prop-types';
 
 import LocationPicker from '../LocationPicker/LocationPicker';
 import CredentialQrCode from '../CredentialQrCode/CredentialQrCode';
@@ -88,3 +89,7 @@ var styles = StyleSheet.create({
     textAlign: 'center'
   }
 });
+
+DisplayCredential.propTypes = {
+  credential: PropTypes.object
+}
