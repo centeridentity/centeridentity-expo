@@ -159,11 +159,11 @@ export default class RecoverIdentity extends React.Component {
         <ActivityIndicator animating={this.state.busy} color={Colors.red800} />
         <Text style={{color: 'red'}}>{this.state.error}</Text>
         <TextInput label={this.props.publicUsernameLabel || 'Public username'}
-          onChange={(e) => {this.publicUsernameChange(e.currentTarget.value)}}
+          onChange={(e) => {this.publicUsernameChange(e.currentTarget.value || e.nativeEvent.text)}}
           value={this.state.publicUsername}
         />
         <TextInput label={this.props.privateUsernameLabel || 'Private username (do not share)'}
-          onChange={(e) => {this.privateUsernameChange(e.currentTarget.value)}}
+          onChange={(e) => {this.privateUsernameChange(e.currentTarget.value || e.nativeEvent.text)}}
           value={this.state.privateUsername}
         />
         <Map
