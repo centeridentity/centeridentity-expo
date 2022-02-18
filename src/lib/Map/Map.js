@@ -54,7 +54,7 @@ export default class Map extends React.Component {
           var marker = await this.props.mapPress(e)
           if (marker && marker.lat && marker.lng) {
             this.setState({
-              markers: [marker]
+              markers: [{lat: parseFloat(marker.lat), lng: parseFloat(marker.lng)}]
             })
           }
         }}
@@ -80,9 +80,9 @@ export default class Map extends React.Component {
             position={{lat: coords.lat, lng: coords.lng}}
             onClick={() => {
               if(window && window.open) {
-                window.open('https://www.google.com/maps/dir/?api=1&destination=' + coords.lat + ',' + coords.lng)
+                //window.open('https://www.google.com/maps/dir/?api=1&destination=' + coords.lat + ',' + coords.lng)
               } else {
-                openMap({ latitude: coords.lat, longitude: coords.lng })
+                //openMap({ latitude: coords.lat, longitude: coords.lng })
               }
             }}
           />

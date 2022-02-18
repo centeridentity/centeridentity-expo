@@ -19,8 +19,9 @@ export default class RecoverIdentity extends React.Component {
       publicUsername: props.publicUsername || '',
       privateUsername: '',
       lat: '',
-      long: '',
-      busy: false
+      lng: '',
+      busy: false,
+      clientSideOnly: props.clientSideOnly
     }
   }
 
@@ -47,7 +48,7 @@ export default class RecoverIdentity extends React.Component {
       lat = e.latLng.lat().toFixed(3);
       lng = e.latLng.lng().toFixed(3);
     }
-    if(this.state.lat && this.state.long && (lat === this.state.lat && lng === this.state.long)) {
+    if(this.state.lat && this.state.lng && (lat === this.state.lat && lng === this.state.lng)) {
       this.setState({
         busy: true
       })
@@ -55,14 +56,22 @@ export default class RecoverIdentity extends React.Component {
         try {
           if(this.props.signinUrl) {
             try {
-              var result = await this.state.ci.signInWithLocation(
-                this.props.sessionIdUrl,
-                this.state.privateUsername,
-                this.state.publicUsername || this.props.publicUsername,
-                this.state.lat,
-                this.state.long,
-                this.props.signinUrl
-              )
+              if (this.props.clientSideOnly) {
+                var result = await this.state.ci.get(
+                  this.state.privateUsername,
+                  this.state.lat,
+                  this.state.lng
+                )
+              } else {
+                var result = await this.state.ci.signInWithLocation(
+                  this.props.sessionIdUrl,
+                  this.state.privateUsername,
+                  this.state.publicUsername || this.props.publicUsername,
+                  this.state.lat,
+                  this.state.lng,
+                  this.props.signinUrl
+                )
+              }
               if (result.message === 'user not found') {
                 if (this.props.signInOnly === true) {
                   return this.setState({
@@ -88,7 +97,7 @@ export default class RecoverIdentity extends React.Component {
               var root_user = await this.state.ci.get(
                 this.state.privateUsername,
                 this.state.lat,
-                this.state.long
+                this.state.lng
               )
               if (!root_user.wif) {
                 //return this.props.onFailedRecovery(root_user);
@@ -101,6 +110,7 @@ export default class RecoverIdentity extends React.Component {
                 root_user.wif,
                 this.state.publicUsername
               )
+              if (this.props.onIdentity) this.props.onIdentity(public_user);
               this.setState({
                 busy: false
               })
@@ -112,7 +122,6 @@ export default class RecoverIdentity extends React.Component {
               })
               return this.props.onFailedRecovery(err);
             }
-            if(this.props.onSuccessfulRecovery) this.props.onSuccessfulRecovery(public_user);
           }
           this.setState({
             busy: false
@@ -126,20 +135,20 @@ export default class RecoverIdentity extends React.Component {
           }
         }
       }, 1000)
-    } else if(this.state.lat && this.state.long && (lat !== this.state.lat || lng !== this.state.long)) {
+    } else if(this.state.lat && this.state.lng && (lat !== this.state.lat || lng !== this.state.lng)) {
       this.setState({
         lat: lat,
-        long: lng
+        lng: lng
       })
     } else {
       this.setState({
         lat: lat,
-        long: lng
+        lng: lng
       })
     }
     return {
       lat: lat,
-      long: lng
+      lng: lng
     };
   }
   setModalVisible = (value) => {
@@ -184,26 +193,44 @@ export default class RecoverIdentity extends React.Component {
               setTimeout(async () => {
                 this.setModalVisible(!this.state.modalVisible);
                 try {
-                  var result = await this.state.ci.registerWithLocation(
-                    this.props.sessionIdUrl,
-                    this.state.privateUsername,
-                    this.state.publicUsername,
-                    this.state.lat,
-                    this.state.long,
-                    this.props.extraData,
-                    this.props.registerUrl
-                  );
+                  if (this.props.clientSideOnly) {
+                    var result = await this.state.ci.setFromNew(
+                      this.state.privateUsername,
+                      this.state.lat,
+                      this.state.lng
+                    )
+                    this.setState({
+                      busy: false
+                    })
+                    var public_user = await this.state.ci.reviveUser(
+                      result.wif,
+                      this.state.publicUsername
+                    )
+                    if (typeof public_user == 'object') {
+                      if (this.props.onIdentity) this.props.onIdentity(public_user);
+                    }
+                  } else {
+                    var result = await this.state.ci.registerWithLocation(
+                      this.props.sessionIdUrl,
+                      this.state.privateUsername,
+                      this.state.publicUsername,
+                      this.state.lat,
+                      this.state.lng,
+                      this.props.extraData,
+                      this.props.registerUrl
+                    );
+                    this.setState({
+                      busy: false
+                    })
+                    if (result.status === true) {
+                      if (this.props.onIdentity) this.props.onIdentity(result.user);
+                      this.props.onSuccessfulRegister && this.props.onSuccessfulRegister(result);
+                    } else {
+                      this.props.onFailedRegister && this.props.onFailedRegister(result);
+                    }
+                  }
                 } catch(err) {
                   this.props.onFailedRegister && this.props.onFailedRegister(err);
-                }
-                this.setState({
-                  busy: false
-                })
-                if (result.status === true) {
-                  if (this.props.onIdentity) this.props.onIdentity(result.user);
-                  this.props.onSuccessfulRegister && this.props.onSuccessfulRegister(result);
-                } else {
-                  this.props.onFailedRegister && this.props.onFailedRegister(result);
                 }
               }, 1000);
             }}>
