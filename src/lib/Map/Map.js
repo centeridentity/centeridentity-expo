@@ -20,7 +20,7 @@ export default class Map extends React.Component {
     }
   }
   render () {
-    const { 
+    const {
       height = 600,
       width = '100%',
       style,
@@ -40,7 +40,7 @@ export default class Map extends React.Component {
     } = this.state
     const location = markers ? markers[0] : {lat: 37.9838, lng: 23.7275};
     return <View style={{...this.props.style, width, height}}>
-      <MapView 
+      <MapView
         style={styles.map}
         initialRegion={{
           latitude: location.lat,
@@ -60,7 +60,7 @@ export default class Map extends React.Component {
         }}
       >
         {
-          circles && circles.map((circle, index) => 
+          circles && circles.map((circle, index) =>
             <Circle
               center={circle.coords}
               radius={circle.radius}
@@ -94,7 +94,7 @@ export default class Map extends React.Component {
 
 const styles = StyleSheet.create({
   map: {
-    width: Dimensions.get('window').width,
+    width: '100%',
     height: Dimensions.get('window').height,
   },
 });

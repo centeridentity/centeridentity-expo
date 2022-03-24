@@ -102,7 +102,7 @@ export default class RecoverIdentity extends React.Component {
               if (!root_user.wif) {
                 //return this.props.onFailedRecovery(root_user);
                 this.setState({
-                  error: 'User not found',
+                  error: this.userNotFoundMessage,
                   modalVisible: true
                 })
               }
@@ -116,7 +116,7 @@ export default class RecoverIdentity extends React.Component {
               })
             } catch(err) {
               this.setState({
-                error: 'User not found',
+                error: this.userNotFoundMessage,
                 busy: false,
                 modalVisible: true
               })
@@ -129,7 +129,7 @@ export default class RecoverIdentity extends React.Component {
         } catch(err) {
           if (err.message === 'user not found') {
             this.setState({
-              error: 'User not found',
+              error: this.userNotFoundMessage,
               modalVisible: true
             })
           }
@@ -180,7 +180,7 @@ export default class RecoverIdentity extends React.Component {
           width={this.props.width} height={this.props.height}
         />
         <Portal>
-          <Modal 
+          <Modal
             visible={this.state.modalVisible}
             onDismiss={() => {this.setModalVisible(!this.state.modalVisible)}}
             contentContainerStyle={containerStyle}
@@ -247,7 +247,7 @@ export default class RecoverIdentity extends React.Component {
           </Modal>
         </Portal>
         <Portal>
-          <Modal 
+          <Modal
             visible={this.state.modalSignInOnlyVisible}
             onDismiss={() => {this.setModalSignInOnlyVisible(!this.state.modalSignInOnlyVisible)}}
             contentContainerStyle={containerStyle}
