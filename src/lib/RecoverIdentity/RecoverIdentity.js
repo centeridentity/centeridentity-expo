@@ -4,6 +4,7 @@ import { View, StyleSheet } from 'react-native';
 import { Modal, Portal, TextInput, Text, Button, ActivityIndicator, Colors } from 'react-native-paper';
 import CenterIdentity from 'centeridentity';
 import { Circle, Marker } from 'react-google-maps';
+import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
 
 import { Provider as PaperProvider } from 'react-native-paper';
 import Map from '../Map/Map';
@@ -102,7 +103,7 @@ export default class RecoverIdentity extends React.Component {
               if (!root_user.wif) {
                 //return this.props.onFailedRecovery(root_user);
                 this.setState({
-                  error: this.userNotFoundMessage,
+                  error: this.props.userNotFoundMessage,
                   modalVisible: true
                 })
               }
@@ -116,7 +117,7 @@ export default class RecoverIdentity extends React.Component {
               })
             } catch(err) {
               this.setState({
-                error: this.userNotFoundMessage,
+                error: this.props.userNotFoundMessage,
                 busy: false,
                 modalVisible: true
               })
@@ -129,7 +130,7 @@ export default class RecoverIdentity extends React.Component {
         } catch(err) {
           if (err.message === 'user not found') {
             this.setState({
-              error: this.userNotFoundMessage,
+              error: this.props.userNotFoundMessage,
               modalVisible: true
             })
           }
@@ -174,6 +175,9 @@ export default class RecoverIdentity extends React.Component {
         <TextInput label={this.props.privateUsernameLabel || 'Private username (do not share)'}
           onChange={(e) => {this.privateUsernameChange(e.currentTarget.value || e.nativeEvent.text)}}
           value={this.state.privateUsername}
+        />
+        <GooglePlacesAutocomplete
+          apiKey="AIzaSyDEbmqlzlkU3mErAG-PPdPEbTrv6opHmag"
         />
         <Map
           mapPress={this.mapPress}
