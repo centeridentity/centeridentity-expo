@@ -14,11 +14,44 @@ export default class Map extends React.Component {
   constructor(props) {
     super(props);
     const {markers, circles} = this.props
+    const location = markers ? markers[0] : {lat: 37.9838, lng: 23.7275};
     this.state = {
       markers,
-      circles
+      circles,
+      region: {
+        latitude: location.lat,
+        longitude: location.lng,
+        latitudeDelta: 50,
+        longitudeDelta: 50,
+      },
+      childRef: React.createRef()
     }
   }
+
+  updateRegion(region) {
+    this.setState({ region })
+  }
+
+  onRegionChangeComplete = (region) => {
+    if(region) {
+      if(this.lastRegion && this.lastRegion.latitude === region.latitude && this.lastRegion.longitude === region.longitude) return
+      this.lastRegion = region
+      this.setState({ region });
+    } else {
+      if(this.lastRegion && this.lastRegion.latitude === this.state.childRef.current.map.getCenter().lat() && this.lastRegion.longitude === this.state.childRef.current.map.getCenter().lng()) return
+      region = {
+        latitude: this.state.childRef.current.map.getCenter().lat(),
+        longitude: this.state.childRef.current.map.getCenter().lng(),
+        latitudeDelta: 50,
+        longitudeDelta: 50
+      }
+      this.lastRegion = region
+      this.setState({
+        region: region
+      })
+    }
+  }
+
   render () {
     const {
       height = 600,
@@ -38,16 +71,12 @@ export default class Map extends React.Component {
       markers,
       circles
     } = this.state
-    const location = markers ? markers[0] : {lat: 37.9838, lng: 23.7275};
     return <View style={{...this.props.style, width, height}}>
       <MapView
+        ref={this.state.childRef}
         style={styles.map}
-        initialRegion={{
-          latitude: location.lat,
-          longitude: location.lng,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        }}
+        initialRegion={this.state.region}
+        region={this.state.region}
         defaultZoom={15}
         provider={PROVIDER_GOOGLE}
         onPress={async (e)=> {
@@ -58,6 +87,7 @@ export default class Map extends React.Component {
             })
           }
         }}
+        onRegionChangeComplete={this.onRegionChangeComplete}
       >
         {
           circles && circles.map((circle, index) =>
@@ -78,12 +108,13 @@ export default class Map extends React.Component {
           console.log(coords);
           return <Marker
             position={{lat: coords.lat, lng: coords.lng}}
-            onClick={() => {
-              if(window && window.open) {
-                //window.open('https://www.google.com/maps/dir/?api=1&destination=' + coords.lat + ',' + coords.lng)
-              } else {
-                //openMap({ latitude: coords.lat, longitude: coords.lng })
-              }
+            onClick={async () => {
+              await this.props.mapPress(null, coords.lat, coords.lng)
+              // if(window && window.open) {
+              //   //window.open('https://www.google.com/maps/dir/?api=1&destination=' + coords.lat + ',' + coords.lng)
+              // } else {
+              //   //openMap({ latitude: coords.lat, longitude: coords.lng })
+              // }
             }}
           />
         })}

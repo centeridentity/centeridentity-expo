@@ -1,10 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View, StyleSheet } from 'react-native';
-import { Modal, Portal, TextInput, Text, Button, ActivityIndicator, Colors } from 'react-native-paper';
+import { Modal, Portal, TextInput, Text, Button, ActivityIndicator, Colors, DefaultTheme } from 'react-native-paper';
 import CenterIdentity from 'centeridentity';
 import { Circle, Marker } from 'react-google-maps';
-import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+import GooglePlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-google-places-autocomplete';
 
 import { Provider as PaperProvider } from 'react-native-paper';
 import Map from '../Map/Map';
@@ -22,7 +22,9 @@ export default class RecoverIdentity extends React.Component {
       lat: '',
       lng: '',
       busy: false,
-      clientSideOnly: props.clientSideOnly
+      clientSideOnly: props.clientSideOnly,
+      placesValue: '',
+      childRef: React.createRef()
     }
   }
 
@@ -38,120 +40,115 @@ export default class RecoverIdentity extends React.Component {
     })
   }
 
-  mapPress = async (e) => {
+  mapPress = async (e, lat, lng) => {
     if(this.state.busy) return;
-    let lat;
-    let lng;
-    if (e.nativeEvent) {
-      lat = e.nativeEvent.coordinate.latitude.toFixed(3);
-      lng = e.nativeEvent.coordinate.longitude.toFixed(3);
-    } else {
-      lat = e.latLng.lat().toFixed(3);
-      lng = e.latLng.lng().toFixed(3);
+    if(!lat || !lng) {
+      if (e.nativeEvent) {
+        lat = e.nativeEvent.coordinate.latitude.toFixed(3);
+        lng = e.nativeEvent.coordinate.longitude.toFixed(3);
+      } else {
+        lat = e.latLng.lat().toFixed(3);
+        lng = e.latLng.lng().toFixed(3);
+      }
     }
-    if(this.state.lat && this.state.lng && (lat === this.state.lat && lng === this.state.lng)) {
-      this.setState({
-        busy: true
-      })
-      setTimeout(async () => {
-        try {
-          if(this.props.signinUrl) {
-            try {
-              if (this.props.clientSideOnly) {
-                var result = await this.state.ci.get(
-                  this.state.privateUsername,
-                  this.state.lat,
-                  this.state.lng
-                )
-              } else {
-                var result = await this.state.ci.signInWithLocation(
-                  this.props.sessionIdUrl,
-                  this.state.privateUsername,
-                  this.state.publicUsername || this.props.publicUsername,
-                  this.state.lat,
-                  this.state.lng,
-                  this.props.signinUrl
-                )
-              }
-              if (result.message === 'user not found') {
-                if (this.props.signInOnly === true) {
-                  return this.setState({
-                    modalSignInOnlyVisible: true
-                  })
-                } else {
-                  return this.setState({
-                    modalVisible: true
-                  })
-                }
-              }
-              if (result.status === true) {
-                if (this.props.onIdentity) this.props.onIdentity(result.user);
-                this.props.onSuccessfulSignIn(result.user);
-              } else {
-                this.props.onFailedSignIn(result);
-              }
-            } catch(err) {
-              return err
-            }
-          } else {
-            try {
-              var root_user = await this.state.ci.get(
-                this.state.privateUsername,
-                this.state.lat,
-                this.state.lng
-              )
-              if (!root_user.wif) {
-                //return this.props.onFailedRecovery(root_user);
-                this.setState({
-                  error: this.props.userNotFoundMessage,
-                  modalVisible: true
-                })
-              }
-              var public_user = await this.state.ci.reviveUser(
-                root_user.wif,
-                this.state.publicUsername
-              )
-              if (this.props.onIdentity) this.props.onIdentity(public_user);
-              this.setState({
-                busy: false
-              })
-            } catch(err) {
-              this.setState({
-                error: this.props.userNotFoundMessage,
-                busy: false,
-                modalVisible: true
-              })
-              return this.props.onFailedRecovery(err);
-            }
-          }
-          this.setState({
-            busy: false
-          })
-        } catch(err) {
-          if (err.message === 'user not found') {
-            this.setState({
-              error: this.props.userNotFoundMessage,
-              modalVisible: true
-            })
-          }
-        }
-      }, 1000)
-    } else if(this.state.lat && this.state.lng && (lat !== this.state.lat || lng !== this.state.lng)) {
-      this.setState({
-        lat: lat,
-        lng: lng
-      })
-    } else {
-      this.setState({
-        lat: lat,
-        lng: lng
-      })
-    }
+    this.setState({
+      lat: lat,
+      lng: lng,
+      locationSelectDone: true
+    })
     return {
       lat: lat,
       lng: lng
     };
   }
+
+  confirmLocation = async () => {
+
+    setTimeout(async () => {
+      try {
+        if(this.props.signinUrl) {
+          try {
+            if (this.props.clientSideOnly) {
+              var result = await this.state.ci.get(
+                this.state.privateUsername,
+                this.state.lat,
+                this.state.lng
+              )
+            } else {
+              var result = await this.state.ci.signInWithLocation(
+                this.props.sessionIdUrl,
+                this.state.privateUsername,
+                this.state.publicUsername || this.props.publicUsername,
+                this.state.lat,
+                this.state.lng,
+                this.props.signinUrl
+              )
+            }
+            if (result.message === 'user not found') {
+              if (this.props.signInOnly === true) {
+                return this.setState({
+                  modalSignInOnlyVisible: true
+                })
+              } else {
+                return this.setState({
+                  modalVisible: true
+                })
+              }
+            }
+            if (result.status === true) {
+              if (this.props.onIdentity) this.props.onIdentity(result.user);
+              this.props.onSuccessfulSignIn(result.user);
+            } else {
+              this.props.onFailedSignIn(result);
+            }
+          } catch(err) {
+            return err
+          }
+        } else {
+          try {
+            var root_user = await this.state.ci.get(
+              this.state.privateUsername,
+              this.state.lat,
+              this.state.lng
+            )
+            if (!root_user.wif) {
+              //return this.props.onFailedRecovery(root_user);
+              this.setState({
+                error: this.props.userNotFoundMessage,
+                modalVisible: true
+              })
+            }
+            var public_user = await this.state.ci.reviveUser(
+              root_user.wif,
+              this.state.publicUsername
+            )
+            if (this.props.onIdentity) this.props.onIdentity(public_user);
+            this.setState({
+              busy: false
+            })
+          } catch(err) {
+            this.setState({
+              error: this.props.userNotFoundMessage,
+              busy: false,
+              modalVisible: true
+            })
+            return this.props.onFailedRecovery(err);
+          }
+        }
+        this.setState({
+          busy: false
+        })
+      } catch(err) {
+        if (err.message === 'user not found') {
+          this.setState({
+            error: this.props.userNotFoundMessage,
+            modalVisible: true
+          })
+        }
+      }
+    }, 1000)
+  }
+
   setModalVisible = (value) => {
     this.setState({
       modalVisible: value
@@ -163,58 +160,78 @@ export default class RecoverIdentity extends React.Component {
     })
   }
 
+  setPlacesValue(value) {
+    this.setState({ placesValue: value })
+    geocodeByAddress(value.label)
+    .then(results => getLatLng(results[0]))
+    .then(({ lat, lng }) =>
+      this.state.childRef.current.updateRegion({
+        latitude: lat,
+        longitude: lng,
+        latitudeDelta: 50,
+        longitudeDelta: 50,
+      })
+    );
+  }
+
   render() {
-    return <PaperProvider>
+    return <PaperProvider theme={DefaultTheme}>
       <View style={{width: this.props.width || '100%', ...styles.container}}>
-        <ActivityIndicator animating={this.state.busy} color={Colors.red800} />
-        <Text style={{color: 'red'}}>{this.state.error}</Text>
-        <TextInput label={this.props.publicUsernameLabel || 'Public username'}
-          onChange={(e) => {this.publicUsernameChange(e.currentTarget.value || e.nativeEvent.text)}}
-          value={this.state.publicUsername}
-        />
-        <TextInput label={this.props.privateUsernameLabel || 'Private username (do not share)'}
-          onChange={(e) => {this.privateUsernameChange(e.currentTarget.value || e.nativeEvent.text)}}
-          value={this.state.privateUsername}
-        />
-        <GooglePlacesAutocomplete
-          apiKey="AIzaSyDEbmqlzlkU3mErAG-PPdPEbTrv6opHmag"
-        />
-        <Map
-          mapPress={this.mapPress}
-          width={this.props.width} height={this.props.height}
-        />
-        <Portal>
-          <Modal
-            visible={this.state.modalVisible}
-            onDismiss={() => {this.setModalVisible(!this.state.modalVisible)}}
-            contentContainerStyle={containerStyle}
-          >
-            <Text>{this.props.userNotFoundMessage || 'Identity not found for provided username and coordinates.'}</Text>
-            <Button style={{marginTop: 30}} onPress={async () => {
+        {/* <Text style={{color: 'red'}}>{this.state.error}</Text> */}
+        {!this.state.busy && !this.state.publicUsernameDone && !this.state.privateUsernameDone && !this.state.locationSelectDone && !this.state.locationConfirmDone && <View>
+          <Text style={styles.mb15}>Specify a public username. This username will be viewable by everyone.</Text>
+          <TextInput  label={this.props.publicUsernameLabel || 'Public username'}
+            onChange={(e) => {this.publicUsernameChange(e.currentTarget.value || e.nativeEvent.text)}}
+            value={this.state.publicUsername}
+            style={styles.mb15}
+          />
+          <Button style={{marginTop: 30}} onPress={() => {
               this.setState({
+                publicUsernameDone: true
+              })
+          }}>
+            Confirm
+          </Button>
+        </View>}
+        {!this.state.busy && this.state.publicUsernameDone && !this.state.privateUsernameDone && !this.state.locationSelectDone && !this.state.locationConfirmDone && <View>
+          <Text style={styles.mb15}>Specify a private username. This username is only visible to you so make it as memorable and personal as possible.</Text>
+          <TextInput  label={this.props.privateUsernameLabel || 'Private username (do not share)'}
+            onChange={(e) => {this.privateUsernameChange(e.currentTarget.value || e.nativeEvent.text)}}
+            value={this.state.privateUsername}
+            style={styles.mb15}
+          />
+          <Button style={{marginTop: 30}} onPress={() => {
+              this.setState({
+                privateUsernameDone: true
+              })
+          }}>
+            Confirm
+          </Button>
+        </View>}
+        {!this.state.busy && this.state.publicUsernameDone && this.state.privateUsernameDone && !this.state.locationSelectDone && !this.state.locationConfirmDone && <View>
+          <Text style={styles.mb15}>The final step to securing your identity is to select an exact location on the map below. The location you select is not sent to Center Identity, so make it as memorable and personal as possible.</Text>
+          <GooglePlacesAutocomplete
+            apiKey="AIzaSyDEbmqlzlkU3mErAG-PPdPEbTrv6opHmag"
+            selectProps={{
+              value: this.state.placesValue,
+              onChange: (value) => {this.setPlacesValue(value)},
+              placeholder: 'Use this search field to get closer to your secret location.',
+              styles: stylez,
+              noOptionsMessage:({inputValue}) => { return "No results found"}
+            }}
+          />
+        </View>}
+        {!this.state.busy && this.state.publicUsernameDone && this.state.privateUsernameDone && this.state.locationSelectDone && !this.state.locationConfirmDone && <View>
+          <Button style={{marginTop: 30}} onPress={() => {
+              this.setState({
+                locationConfirmDone: true,
                 busy: true
               })
+              this.confirmLocation()
               setTimeout(async () => {
                 this.setModalVisible(!this.state.modalVisible);
                 try {
-                  if (this.props.clientSideOnly) {
                     var result = await this.state.ci.setFromNew(
-                      this.state.privateUsername,
-                      this.state.lat,
-                      this.state.lng
-                    )
-                    this.setState({
-                      busy: false
-                    })
-                    var public_user = await this.state.ci.reviveUser(
-                      result.wif,
-                      this.state.publicUsername
-                    )
-                    if (typeof public_user == 'object') {
-                      if (this.props.onIdentity) this.props.onIdentity(public_user);
-                    }
-                  } else {
-                    var result = await this.state.ci.registerWithLocation(
                       this.props.sessionIdUrl,
                       this.state.privateUsername,
                       this.state.publicUsername,
@@ -232,48 +249,68 @@ export default class RecoverIdentity extends React.Component {
                     } else {
                       this.props.onFailedRegister && this.props.onFailedRegister(result);
                     }
-                  }
                 } catch(err) {
                   this.props.onFailedRegister && this.props.onFailedRegister(err);
                 }
               }, 1000);
-            }}>
-              {this.props.createText || 'Create'}
-            </Button>
-            <Button style={{marginTop: 30}} onPress={() => {
-                this.setState({
-                  busy: false
-                })
-                this.setModalVisible(!this.state.modalVisible);
-            }}>
-              {this.props.tryAgainText || 'Try again'}
-            </Button>
-          </Modal>
-        </Portal>
-        <Portal>
-          <Modal
-            visible={this.state.modalSignInOnlyVisible}
-            onDismiss={() => {this.setModalSignInOnlyVisible(!this.state.modalSignInOnlyVisible)}}
-            contentContainerStyle={containerStyle}
-          >
-            <Text>{this.props.userNotFoundMessage || 'Identity not found for provided username and coordinates.'}</Text>
-            <Button style={{marginTop: 30}} onPress={() => {
-                this.setState({
-                  busy: false
-                })
-                this.setModalSignInOnlyVisible(!this.state.modalSignInOnlyVisible);
-            }}>
-              {this.props.tryAgainText || 'Try again'}
-            </Button>
-          </Modal>
-        </Portal>
+          }}>
+            Confirm
+          </Button>
+          <Button style={{marginTop: 30}} onPress={() => {
+              this.setState({
+                locationSelectDone: false
+              })
+          }}>
+            Select different location
+          </Button>
+        </View>}
+        {this.state.busy && <Text
+        >&nbsp;</Text>}
+        {this.state.busy && <ActivityIndicator animating={this.state.busy} color={Colors.red800} size='large' />}
+        <Text
+        >&nbsp;</Text>
+        {!this.state.busy && this.state.publicUsernameDone && this.state.privateUsernameDone && !this.state.locationSelectDone && !this.state.locationConfirmDone && <Map
+          ref={this.state.childRef}
+          mapPress={this.mapPress}
+          width={this.props.width} height={this.props.height}
+        />}
       </View>
     </PaperProvider>
   }
 }
+const stylez = {
+  control: base => ({
+    ...base,
+    fontFamily: 'Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif',
+    color: 'rgba(0, 0, 0, 0.54)',
+    backgroundColor: 'rgb(231, 231, 231)',
+    '&:hover': {
+      borderColor: 'rgb(98, 0, 238)',
+      boxShadow: 'rgb(98, 0, 238)'
+    },
+    '&:focus': {
+      borderColor: 'rgb(98, 0, 238)',
+      boxShadow: 'rgb(98, 0, 238)'
+    }
+  }),
+  menu: base => ({
+    ...base,
+    fontFamily: 'Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif'
+  })
+};
 
 const styles = StyleSheet.create({
   container: {
+  },
+  mt15: {
+    marginTop: 15
+  },
+  mb15: {
+    marginBottom: 15
+  },
+  mtb15: {
+    marginTop: 15,
+    marginBottom: 15
   }
 })
 
